@@ -58,5 +58,3 @@ def get_country(name: str) -> Country:
         return map_to_country_obj(country)
     except KeyError:
         return None
-    except:
-        return None

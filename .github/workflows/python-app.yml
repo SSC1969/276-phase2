@@ -9,9 +9,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-permissions:
-  contents: read
-
 jobs:
   lint:
     name: Linting
@@ -42,16 +39,27 @@ jobs:
           pip install --group dev
 
       - name: Run tests and generate coverage report
-        run: pytest -q --cov-report xml:.github/cov.xml
+        run: pytest -q --cov-report xml:cov.xml
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v5
+        with:
+          name: pytest-results
+          path: cov.xml
+
   coverage:
     name: Test Coverages
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Download coverage results
+        uses: actions/download-artifact@v5
+        with:
+          name: pytest-results
       - name: Get coverage
         uses: orgoro/coverage@v3.2
         with:
-          coverageFile: .github/cov.xml
+          coverageFile: cov.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           thresholdAll: 0.5
           thresholdModified: 0.6

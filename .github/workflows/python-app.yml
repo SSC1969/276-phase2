@@ -42,7 +42,13 @@ jobs:
           pip install --group dev
 
       - name: Run tests and generate coverage report
-        run: pytest -q --cov-report xml:cov.xml
+        run: pytest -q --cov-report xml
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v5
+        with:
+          name: Coverage Report
+          path: cov.xml
+          
   coverage:
     name: Test Coverage
     needs: test

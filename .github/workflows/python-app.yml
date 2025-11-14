@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: Coverage Report
-          path: cov.xml
+          path: .github/cov.xml
           
   coverage:
     name: Test Coverage

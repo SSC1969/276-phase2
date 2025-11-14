@@ -45,6 +45,7 @@ jobs:
         run: pytest -q --cov-report xml:cov.xml
   coverage:
     name: Test Coverage
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Get coverage

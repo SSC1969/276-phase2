@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: Coverage Report
-          path: .github/cov.xml
+          path: cov.xml
           
   coverage:
     name: Test Coverage
@@ -57,7 +57,7 @@ jobs:
       - name: Get coverage
         uses: orgoro/coverage@v3.2
         with:
-          coverageFile: .github/cov.xml
+          coverageFile: cov.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           thresholdAll: 0.5
           thresholdModified: 0.6

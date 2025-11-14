@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from nicegui import Event, ui
 
@@ -18,40 +18,53 @@ game
     - win/loss popup
 """
 
-# TODO: Replace with data type containing actual guess feedback
-guess_graded = Event[str]()
-game_ended = Event[bool]()
-
-
-def try_guess(guess_input, feedback):
-    if guess_input.validate():
-        handle_guess(guess_input.value)
-        guess_input.clear()
-        # TODO: Move this emit into the actual handle_guess function
-        guess_graded.emit()
-
-
-@game_ended.subscribe
-def display_results(won: bool):
-    # TODO: Add pop-up that will display whether you won or lost,
-    # your # of guesses and time, and (in future) the leaderboard info
-
-    pass
-
 
 def content():
+    # TODO: Replace with data type containing actual guess feedback
+    guess_graded = Event[str]()
+    game_ended = Event[bool]()
+
     options = []
     with open("src/game/countries.json") as file:
         options = json.load(file)
 
+    def is_guess_valid(guess: str) -> str | None:
+        """
+        Validates the given guess, either returning an error
+        message if it's invalid, or None if it's valid.
+        """
+        if guess.lower() not in options:
+            return "Not a valid country!"
+        guessed_names = [d.get("name") for d in feedback.rows]
+        if guess.capitalize() in guessed_names:
+            return "Already guessed!"
+        return None
+
+    def try_guess():
+        """
+        Validates an inputted guess and passes it into the guess handler
+        if it's valid.
+        """
+        if guess_input.validate():
+            handle_guess(guess_input.value)
+
+            # TODO: Move this emit into the actual handle_guess function
+            guess_graded.emit(guess_input.value)
+
+            guess_input.value = ""
+
+            # TODO: Move this emit into game_end()
+            if len(feedback.rows) == 6:
+                game_ended.emit(False)
+
     # TODO: Add actual feedback instead of placeholder data
     @guess_graded.subscribe
-    def display_feedback():
+    def display_feedback(guess: str):
         """
         Displays the feedback passed as an argument in the feedback table
         """
         row = {
-            "name": "Test",
+            "name": guess.capitalize(),
             "population": "25",
             "size": "like 2",
             "region": "Azerbaijan",
@@ -61,8 +74,32 @@ def content():
         }
         feedback.add_row(row)
 
+    @game_ended.subscribe
+    def display_results(won: bool):
+        """
+        Displays the game results pop-up
+        """
+        if won:
+            text = "Congratulaions!"
+        else:
+            text = "Too bad!"
+
+        # TODO: Grab these values from the actual round data
+        time: timedelta = timedelta(hours=1)
+        guesses: int = 4
+
+        with ui.dialog() as dialog, ui.card():
+            ui.label(text)
+            ui.label(f"Time: {time}")
+            ui.label(f"Guesses: {guesses}")
+            ui.button("Close", on_click=dialog.close)
+
+            # TODO: Display leaderboard/player stats here?
+
+            dialog.open()
+
     with ui.column(align_items="center").classes("mx-auto w-full max-w-md p-4"):
-        timer = ui.label()
+        timer = ui.label().mark("timer")
         # TODO: Replace with actual game timer, not just current time
         ui.timer(1.0, lambda: timer.set_text(f"{datetime.now():%X}"))
 
@@ -87,12 +124,12 @@ def content():
                     label="Guess",
                     placeholder="Enter a country",
                     autocomplete=options,
-                    validation={"Not a valid country!": lambda value: value.lower() in options},
+                    validation=is_guess_valid,
                 )
                 .without_auto_validation()
-                .on("keydown.enter", lambda: try_guess(guess_input, feedback))
+                .on("keydown.enter", lambda: try_guess())
             )
-            ui.button("Submit", on_click=lambda: try_guess(guess_input, feedback))
+            ui.button("Submit", on_click=lambda: try_guess())
 
 
 # button to display leaderboards

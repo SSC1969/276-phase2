@@ -48,7 +48,7 @@ jobs:
           path: cov.xml
 
   coverage:
-    name: Test Coverages
+    name: Test Coverage
     needs: test
     runs-on: ubuntu-latest
     steps:

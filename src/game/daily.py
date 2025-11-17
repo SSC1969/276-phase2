@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta, timezone
 from nicegui import Event
 
 from phase2.country import Country, get_country, get_random_country
-from phase2.statistics import RoundStatistics, RoundStatisticsRepository
 
 MAX_GUESSES = 5
 
@@ -12,15 +11,17 @@ MAX_GUESSES = 5
 class RoundStats:
     guesses: int = 0
     max_guesses: int
+    mode: str
     round_start: datetime
     guess_graded: Event[str]
     game_ended: Event[bool]
     round_time: timedelta
 
-    def __init__(self):
+    def __init__(self, mode: str):
         self.guesses = 0
         self.max_guesses = MAX_GUESSES
         self.round_start = datetime.now(timezone.utc)
+        self.mode = mode
 
         # TODO: Replace with data type containing actual guess feedback
         self.guess_graded = Event[str]()
@@ -172,21 +173,16 @@ def end_game(won: bool, round_stats: RoundStats):
 
     # TODO (milestone 2): Get the user id of the currently playing user, if there is one
 
-    # TODO: Get this round's stats properly
-    round_time: timedelta = timedelta()
-    round_guesses: int = guesses
-
-    round_stats = RoundStatistics(
-        time_to_complete=round_time, won=won, guesses=round_guesses, mode=mode
-    )
-
-    if mode == "daily":
-        round_stats.daily_date = date.today()
     # TODO (milestone 3): Add in the number of survival rounds completed
 
-    # TODO (milestone 2): Add round to the rounds database
-    round_statistics_repo = RoundStatisticsRepository()
-    round_statistics_repo.add_round(round_stats)
+    # TODO (milestone 2): Add round to the rounds database properly
+    """round_statistics_repo = RoundStatisticsRepository()
+    round_statistics_repo.add_round(
+        time_to_complete=round_stats.round_time,
+        won=won,
+        guesses=round_stats.guesses,
+        mode=round_stats.mode,
+    )"""
 
-    # TODO: Show game stats in UI
-    # content.game_ended.emit(won)
+    # Show game stats in UI
+    round_stats.game_ended.emit(won)

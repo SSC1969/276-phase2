@@ -27,17 +27,6 @@ def handle_guess(input: str, round_stats: RoundStats):
 
     feedback: GuessFeedback = compare_countries(country, daily_country)
 
-    # TODO: Remove placeholder feedback
-    feedback = GuessFeedback(
-        name=False,
-        population=">",
-        size="<",
-        currencies="partial",
-        languages=False,
-        timezones="partial",
-        region=True,
-    )
-
     if feedback.name:  # correct guess
         end_game(True, round_stats)
         round_stats.end_round()
@@ -48,7 +37,7 @@ def handle_guess(input: str, round_stats: RoundStats):
     round_stats.guess_graded.emit(country, feedback)
 
 
-def compare_countries(guess: Country, answer: Country) -> bool:
+def compare_countries(guess: Country, answer: Country) -> GuessFeedback:
     """
     Check if the two countries match.
     If they match, return True.
@@ -60,52 +49,35 @@ def compare_countries(guess: Country, answer: Country) -> bool:
     - Timezones
     - Region
 
-    Returns True if correct, False otherwise.
+    Returns a GuessFeedback structure containing the results of the comparison
     """
-    # TODO: Create a data structure to be returned by this function
-    # containing guess feedback info
+    feedback = GuessFeedback()
 
     # Check if countries match (correct guess)
-    if guess.name.lower() == answer.name.lower():
-        print(f"\nCorrect! The answer is {answer.name}!")
-        return True
-
-    # Wrong guess - provide comparison feedback
-    print(f"\n{guess.name} is not correct. Here are your hints:\n")
+    feedback.name = guess.name.lower() == answer.name.lower()
 
     # Compare population
     if guess.population and answer.population:
         ratio = guess.population / answer.population
-        if ratio < 0.5:
-            print("Population: The correct answer has MORE THAN DOUBLE the population")
-        elif ratio < 0.9:
-            print("Population: The correct answer has a HIGHER population")
-        elif ratio <= 1.1:
-            print("Population: Very close in population!")
-        elif ratio <= 2:
-            print("Population: The correct answer has a LOWER population")
-        else:
-            print("Population: The correct answer has LESS THAN HALF the population")
+        if ratio < 1:
+            feedback.population = "<"
+        elif ratio > 1:
+            feedback.population = ">"
+        elif ratio == 1:
+            feedback.population = True
 
     # Compare size (area)
     if guess.size and answer.size:
         ratio = guess.size / answer.size
-        if ratio < 0.5:
-            print("Size: The correct answer is MORE THAN DOUBLE the area")
-        elif ratio < 0.9:
-            print("Size: The correct answer is LARGER in area")
-        elif ratio <= 1.1:
-            print("Size: Very close in area!")
-        elif ratio <= 2:
-            print("Size: The correct answer is SMALLER in area")
-        else:
-            print("Size: The correct answer is LESS THAN HALF the area")
+        if ratio < 1:
+            feedback.size = "<"
+        elif ratio > 1:
+            feedback.size = ">"
+        elif ratio == 1:
+            feedback.size = True
 
     # Compare region
-    if guess.region == answer.region:
-        print(f"Region: Correct! Same region ({answer.region})")
-    else:
-        print(f"Region: Different region (correct answer is in {answer.region})")
+    feedback.region = guess.region == answer.region
 
     # Compare currencies
     guess_currencies = set(guess.currencies) if guess.currencies else set()
@@ -113,12 +85,11 @@ def compare_countries(guess: Country, answer: Country) -> bool:
 
     if answer_currencies:
         if guess_currencies == answer_currencies:
-            print("Currencies: Exact match on all currencies!")
+            feedback.currencies = True
         elif guess_currencies & answer_currencies:  # Has intersection
-            shared = ", ".join(guess_currencies & answer_currencies)
-            print(f"Currencies: Partial match! Shared: {shared}")
+            feedback.currencies = "partial"
         else:
-            print("Currencies: No matching currencies")
+            feedback.currencies = False
 
     # Compare languages
     guess_languages = set(guess.languages) if guess.languages else set()
@@ -126,12 +97,11 @@ def compare_countries(guess: Country, answer: Country) -> bool:
 
     if answer_languages:
         if guess_languages == answer_languages:
-            print("Languages: Exact match on all languages!")
+            feedback.languages = True
         elif guess_languages & answer_languages:  # Has intersection
-            shared = ", ".join(guess_languages & answer_languages)
-            print(f"Languages: Partial match! Shared: {shared}")
+            feedback.languages = "partial"
         else:
-            print("Languages: No matching languages")
+            feedback.languages = False
 
     # Compare timezones
     guess_timezones = set(guess.timezones) if guess.timezones else set()
@@ -139,14 +109,13 @@ def compare_countries(guess: Country, answer: Country) -> bool:
 
     if answer_timezones:
         if guess_timezones == answer_timezones:
-            print("Timezones: Exact match on all timezones!")
+            feedback.timezones = True
         elif guess_timezones & answer_timezones:  # Has intersection
-            print("Timezones: Some timezones overlap")
+            feedback.timezones = "partial"
         else:
-            print("Timezones: No matching timezones")
+            feedback.timezones = False
 
-    print()  # Empty line for readability
-    return False
+    return feedback
 
 
 def end_game(won: bool, round_stats: RoundStats):
@@ -155,6 +124,8 @@ def end_game(won: bool, round_stats: RoundStats):
     on to be processed in statistics.py, and show a breakdown of this game's
     stats to the user
     """
+
+    round_stats.end_round()
 
     # TODO (milestone 2): Get the user id of the currently playing user, if there is one
 

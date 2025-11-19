@@ -78,7 +78,6 @@ def content():
             handle_guess(guess_input.value, round_stats)
             guess_input.value = ""
 
-    # TODO: Add actual feedback instead of placeholder data
     @round_stats.guess_graded.subscribe
     def display_feedback(country: Country, feedback: GuessFeedback):
         """

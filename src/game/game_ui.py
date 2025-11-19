@@ -50,6 +50,13 @@ def content():
     with open("src/game/countries.json") as file:
         options = json.load(file)
 
+    ui.add_css("""
+    .r-scroll-area-centered .q-scrollarea__content {
+        align-items: center;
+        justify-content: center;
+    }
+    """)
+
     def is_guess_valid(guess: str) -> str | None:
         """
         Validates the given guess, either returning an error
@@ -74,7 +81,6 @@ def content():
             # TODO: Move this emit into game_end()
             # round_stats.game_ended.emit(False)
 
-    # TODO: Add actual feedback instead of placeholder data
     @round_stats.guess_graded.subscribe
     def display_feedback(country: Country, feedback: GuessFeedback):
         """
@@ -83,15 +89,16 @@ def content():
 
         with guesses:
             for attr, value in vars(feedback).items():
-                classes = "aspect-square h-24 justify-center text-center "
-                style = None
+                classes = "aspect-square h-28 justify-center text-center p-0 "
+                arrow_style = None
+                # Style card based on the feedback given
                 match value:
                     case ">":
                         classes += similar_bg
-                        style = greater_than_arrow
+                        arrow_style = greater_than_arrow
                     case "<":
                         classes += similar_bg
-                        style = less_than_arrow
+                        arrow_style = less_than_arrow
                     case "partial":
                         classes += similar_bg
                 if isinstance(value, bool):
@@ -100,14 +107,14 @@ def content():
                     else:
                         classes += incorrect_bg
 
+                # Create a card with the given style and the attribute formatted cleanly
                 with ui.card(align_items="center").classes(classes):
-                    if style:
-                        ui.element("div").classes("absolute inset-0 bg-black/40").style(style)
+                    if arrow_style:
+                        ui.element("div").classes("absolute inset-0 bg-black/40").style(arrow_style)
 
-                    with ui.row().classes("items-center"):
-                        attr_content = getattr(country, attr)
-                        text = str(attr_content)
-
+                    attr_content = getattr(country, attr)
+                    text = str(attr_content)
+                    with ui.scroll_area().classes("r-scroll-area-centered"):
                         if attr == "population":
                             text = format(attr_content, ",")
                         elif attr == "size":

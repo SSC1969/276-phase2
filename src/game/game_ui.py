@@ -43,7 +43,7 @@ less_than_arrow = r"clip-path: polygon(98% 60%,80% 60%,80% 5%,20% 5%,20% 60%,3% 
 
 
 def content():
-    round_stats = RoundStats()
+    round_stats = RoundStats(mode="daily")
     guessed_names = []
 
     options = []
@@ -78,9 +78,7 @@ def content():
             handle_guess(guess_input.value, round_stats)
             guess_input.value = ""
 
-            # TODO: Move this emit into game_end()
-            # round_stats.game_ended.emit(False)
-
+    # TODO: Add actual feedback instead of placeholder data
     @round_stats.guess_graded.subscribe
     def display_feedback(country: Country, feedback: GuessFeedback):
         """

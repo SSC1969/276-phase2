@@ -79,10 +79,10 @@ def content():
                 arrow_style = None
                 # Style card based on the feedback given
                 match value:
-                    case ">":
+                    case "<":
                         classes += similar_bg
                         arrow_style = greater_than_arrow
-                    case "<":
+                    case ">":
                         classes += similar_bg
                         arrow_style = less_than_arrow
                     case "partial":

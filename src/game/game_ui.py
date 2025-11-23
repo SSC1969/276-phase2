@@ -17,12 +17,7 @@ def concat_data(feedback, data) -> str:
 
 
 def list_to_str(items: list):
-    res = ""
-    for item in items:
-        if item != items[0]:
-            res += ", "
-        res += item
-    return res
+    return ", ".join(str(x) for x in items)
 
 
 correct_bg = "bg-green-500 "

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import Float, Integer, Sequence, select, update
+from sqlalchemy import Float, Integer, Sequence, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, declarative_base, mapped_column
 
@@ -75,11 +75,12 @@ class Leaderboard:
             entry.average_daily_time = stats.average_daily_time
             entry.longest_survival_streak = stats.longest_survival_streak
 
-            if stats.score > entry.score:  # ⬅️ changed
+            if stats.score > entry.score:  
                 entry.score = stats.score 
 
         try:
             self.session.commit()
+            self.session.refresh(entry)
         except IntegrityError:
             self.session.rollback()
             return None

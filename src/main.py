@@ -6,10 +6,11 @@ from nicegui.events import KeyEventArguments
 
 from game import game_ui
 from game.daily import get_daily_country
+from game.leaderboard_ui import leaderboard_page
 
 logger = logging.getLogger("phase2")
 
-from game.leaderboard_ui import leaderboard_page
+
 
 class LogElementHandler(logging.Handler):
     """A logging handler that emits messages to a log element."""

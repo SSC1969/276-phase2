@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import httpx
 from nicegui import ui
@@ -11,7 +11,7 @@ def fetch_leaderboard() -> List[Dict[str, Any]]:
 
     try:
         with httpx.Client(base_url=API_BASE_URL, timeout=2.0) as client:
-            response = client.get("/v2/leaderboard")
+            response = client.get("/leaderboard")
             response.raise_for_status()
             entries = response.json()
 
@@ -83,12 +83,18 @@ def leaderboard_page() -> None:
     columns = [
         {"name": "rank", "label": "Rank", "field": "rank", "sortable": True},
         {"name": "user_id", "label": "User_ID", "field": "user_id", "sortable": True},
-        {"name": "daily_streak", "label": "Daily Streak", "field": "daily_streak", "sortable": True},
-        {"name": "longest_daily_streak", "label": "Longest Daily Streak", "field": "longest_daily_streak", "sortable": True},
-        {"name": "average_daily_guesses", "label": "Avg Guesses", "field": "average_daily_guesses", "sortable": True},
-        {"name": "average_daily_time", "label": "Avg Time", "field": "average_daily_time", "sortable": True},
-        {"name": "longest_survival_streak", "label": "Survival Streak", "field": "longest_survival_streak", "sortable": True},
-        {"name": "high_score", "label": "High Score", "field": "high_score", "sortable": True},
+        {"name": "daily_streak", "label": "Daily Streak", 
+         "field": "daily_streak", "sortable": True},
+        {"name": "longest_daily_streak", "label": "Longest Daily Streak", 
+         "field": "longest_daily_streak", "sortable": True},
+        {"name": "average_daily_guesses", "label": "Avg Guesses", 
+         "field": "average_daily_guesses", "sortable": True},
+        {"name": "average_daily_time", "label": "Avg Time", 
+         "field": "average_daily_time", "sortable": True},
+        {"name": "longest_survival_streak", "label": "Survival Streak", \
+         "field": "longest_survival_streak", "sortable": True},
+        {"name": "high_score", "label": "High Score", 
+         "field": "high_score", "sortable": True},
     ]
 
     table = ui.table(

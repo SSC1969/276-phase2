@@ -182,22 +182,6 @@ def content():
                 .on("keydown.enter", try_guess)
             )
             submit = ui.button("Submit", on_click=try_guess)
-            ui.button(
-                "Test win",
-                on_click=lambda: (
-                    round_stats.start_round(),
-                    round_stats.end_round(),
-                    round_stats.game_ended.emit(True),
-                ),
-            )
-            ui.button(
-                "Test loss",
-                on_click=lambda: (
-                    round_stats.start_round(),
-                    round_stats.end_round(),
-                    round_stats.game_ended.emit(False),
-                ),
-            )
 
 
 # button to display leaderboards

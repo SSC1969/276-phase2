@@ -276,4 +276,6 @@ def survival_content():
         ui.button("Back to Menu", on_click=lambda: ui.navigate.to("/"))
 
 if __name__ == "__main__":
-    survival_content()  # or start the UI server here
+    survival_content()
+    from nicegui import ui
+    ui.run()  # <-- keeps the UI running

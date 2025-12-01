@@ -10,6 +10,7 @@ from local_repos.auth import LocalAuthRepo
 from local_repos.friends import LocalFriendsRepo
 from local_repos.stats import LocalStatisticsRepo
 from local_repos.users import LocalUserRepo
+from ...user_service.src.user_service.models import User, UserRepository    
 
 DEFAULT_AVATAR = Path("avatars/default.jpg")
 AVATAR_DIR = Path("avatars")

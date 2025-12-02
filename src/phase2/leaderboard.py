@@ -8,9 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from phase2.friends import Friendship
-from sqlalchemy.orm import Mapped, Session, mapped_column
-
-from user_service.src.shared.database import Base, get_db
+from phase2.statistics import StatisticsRepository
 
 
 class LeaderboardEntry(Base):
@@ -18,8 +16,6 @@ class LeaderboardEntry(Base):
 
     entry_id: Mapped[int] = mapped_column(Integer, Sequence("entry_id_seq"), primary_key=True)
     user_id: Mapped[int] = mapped_column(
-        Integer, nullable=False
-    )  # ForeignKey(user_id). once users table is linked
         Integer, nullable=False
     )  # ForeignKey(user_id). once users table is linked
 
@@ -31,15 +27,17 @@ class LeaderboardEntry(Base):
     )  # highest daily streak ever recorded
     average_daily_guesses: Mapped[int] = mapped_column(Integer, default=0)
     average_daily_time: Mapped[timedelta] = mapped_column(
-        Interval,  default=timedelta(seconds=0)
+        Interval, default=timedelta(seconds=0)
     )  # average time to complete the daily in seconds
     longest_survival_streak: Mapped[int] = mapped_column(Integer, default=0)
     score: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class LeaderboardRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, stats_repo: StatisticsRepository = None):
         self.session = session
+        if not stats_repo:
+            stats_repo = StatisticsRepository(get_db())
         self.stats_repo = stats_repo
 
     async def sync_user_entry(self, user_id: int) -> LeaderboardEntry | None:
@@ -149,17 +147,17 @@ class LeaderboardRepository:
         (including the given user)
         """
 
-        # Get friend IDs 
+        # Get friend IDs
         stmt = select(Friendship.friend_id).where(Friendship.user_id == user_id)
         friend_ids = self.session.execute(stmt).scalars().all()
 
         # Always include the user's own ID
         friend_ids.append(user_id)
 
-        # Remove duplicates 
+        # Remove duplicates
         friend_ids = list(set(friend_ids))
 
-        # Query leaderboard entries for the 
+        # Query leaderboard entries for the
         stmt = select(LeaderboardEntry).where(LeaderboardEntry.user_id.in_(friend_ids))
         entries = self.session.execute(stmt).scalars().all()
 
@@ -200,6 +198,6 @@ class LeaderboardEntrySchema(BaseModel):
     longest_survival_streak: int
 
 
-def get_leaderboard_repository() -> Leaderboard:
+def get_leaderboard_repository() -> LeaderboardRepository:
     db = get_db()
-    return Leaderboard(session=db)
+    return LeaderboardRepository(session=db)

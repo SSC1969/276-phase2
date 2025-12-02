@@ -1,7 +1,7 @@
 import logging
 import os
 
-from admin import main as admin
+from user_service import admin
 from nicegui import app, ui
 from nicegui.events import KeyEventArguments
 
@@ -83,15 +83,6 @@ def index_page():
     game_ui.content()
 
 
-<<<<<<< HEAD
-
-@ui.page("/leaderboard")
-def _():
-    leaderboard_page()
-
-
-ui.run(title="CountryClue", dark=None)
-=======
 app.include_router(admin.router)
 ui.run(
     title="CMPT276 Project",
@@ -99,4 +90,3 @@ ui.run(
     port=int(os.getenv("PORT", 8080)),
     storage_secret=(os.getenv("STORAGE_SECRET", "placeholder")),
 )
->>>>>>> 5361ad7e13c5c9682098c91ce566c7a03f45fd9d

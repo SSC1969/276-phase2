@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from shared.database import Base, get_db
+from user_service.src.shared import Base, get_db
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from sqlalchemy.types import Boolean, Date, Integer, Interval, String

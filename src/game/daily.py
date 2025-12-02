@@ -4,7 +4,6 @@ from datetime import date
 
 from phase2.country import Country, get_country, get_random_country
 from phase2.round import GuessFeedback, RoundStats
-from phase2.statistics import get_statistics_repository
 
 logger = logging.getLogger("phase2.daily")
 
@@ -137,7 +136,6 @@ async def end_game(won: bool, round_stats: RoundStats):
     on to be processed in statistics.py, and show a breakdown of this game's
     stats to the user
     """
-    stats_repo = get_statistics_repository()
 
     round_stats.end_round()
     round_stats.won = won
@@ -149,7 +147,7 @@ async def end_game(won: bool, round_stats: RoundStats):
     # TODO (milestone 3): Add in the number of survival rounds completed
 
     # Add round to the round stats database (currently with placeholder user id)
-    await stats_repo.add_round(round_stats)
+    await round_stats.stats_repo.add_round(round_stats)
 
     # Show game stats in UI
     round_stats.game_ended.emit(won)

@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from phase2.friends import Friendship
-from phase2.statistics import StatisticsRepository
+from phase2.statistics import RoundStatisticsRepository
 
 
 class LeaderboardEntry(Base):
@@ -34,10 +34,10 @@ class LeaderboardEntry(Base):
 
 
 class LeaderboardRepository:
-    def __init__(self, session: Session, stats_repo: StatisticsRepository = None):
+    def __init__(self, session: Session):
         self.session = session
-        if not stats_repo:
-            stats_repo = StatisticsRepository(get_db())
+        stats_repo = RoundStatisticsRepository(self.session)
+
         self.stats_repo = stats_repo
 
     async def sync_user_entry(self, user_id: int) -> LeaderboardEntry | None:
@@ -109,12 +109,10 @@ class LeaderboardRepository:
 
         return result
 
-    async def get_all(
-        self,
-    ) -> list[LeaderboardEntry]:
+    async def get_all(self) -> list[LeaderboardEntry]:
         """Get all users"""
-        users = self.session.scalars(select(LeaderboardEntry)).all()
-        return users
+        entries = self.session.scalars(select(LeaderboardEntry)).all()
+        return entries
 
     async def get_top_10_entries(self) -> list[LeaderboardEntry]:
         """
@@ -184,8 +182,13 @@ class LeaderboardRepository:
         return entry.score
 
 
-def get_leaderboard_repository(db: Session = Depends(get_db)) -> LeaderboardRepository:
-    return LeaderboardRepository(db)
+def get_leaderboard_repository(
+    db: Session = Depends(get_db), stats_repo=None
+) -> LeaderboardRepository:
+    repo = LeaderboardRepository(db)
+    if stats_repo:
+        stats_repo.lb_repo = repo
+    return repo
 
 
 class LeaderboardEntrySchema(BaseModel):
@@ -196,8 +199,3 @@ class LeaderboardEntrySchema(BaseModel):
     average_daily_guesses: int
     average_daily_time: timedelta
     longest_survival_streak: int
-
-
-def get_leaderboard_repository() -> LeaderboardRepository:
-    db = get_db()
-    return LeaderboardRepository(session=db)

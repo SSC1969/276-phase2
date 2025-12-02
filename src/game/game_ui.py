@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from nicegui import ui
 
+from game import repos
 from game.daily import get_daily_country, handle_guess
 from game.leaderboard_ui import fetch_leaderboard
 from phase2.account_ui import SESSION
@@ -11,9 +12,8 @@ from phase2.round import GuessFeedback, RoundStats
 
 # NiceGUI elements go here
 
+
 # display the game (guess input, guess feedback, timer, # of guesses, etc.)
-
-
 def concat_data(feedback, data) -> str:
     return str(feedback) + "|" + str(data)
 
@@ -32,6 +32,7 @@ less_than_arrow = r"clip-path: polygon(98% 60%,80% 60%,80% 5%,20% 5%,20% 60%,3% 
 
 def content():
     round_stats = RoundStats(mode="daily")
+    round_stats.stats_repo = repos["stats_repo"]
 
     options = []
     with open("src/game/countries.json") as file:
@@ -126,7 +127,7 @@ def content():
         ui.notify("There was an issue processing that guess. Try something else!")
 
     @round_stats.game_ended.subscribe
-    def display_results(won: bool):
+    async def display_results(won: bool):
         """
         Displays the game results pop-up
         """
@@ -145,7 +146,7 @@ def content():
             ui.label(f"Time: {str(round_stats.round_length).split('.')[0]}")
             ui.label(f"Guesses: {round_stats.guesses}")
 
-            popup_leaderboard("daily")
+            await popup_leaderboard("daily")
             ui.button("Close", on_click=dialog.close)
 
             dialog.open()
@@ -193,6 +194,8 @@ def content():
 
         # button to open account management menu
         ui.button("Account", on_click=go_to_account)
+
+
 # button to display leaderboards
 """
 leaderboard
@@ -203,7 +206,7 @@ leaderboard
 """
 
 
-def popup_leaderboard(mode: str):
+async def popup_leaderboard(mode: str):
     columns = [
         {"name": "user_id", "label": "Player", "field": "user_id", "sortable": True},
         {
@@ -245,7 +248,8 @@ def popup_leaderboard(mode: str):
                 "sortable": True,
             }
         )
-    table = ui.table(columns=columns, rows=fetch_leaderboard(), row_key="entry_id", pagination=10)
+    new_rows = await fetch_leaderboard()
+    table = ui.table(columns=columns, rows=new_rows, row_key="entry_id", pagination=10)
 
     # TODO: Properly retrieve user id for logged in user
     user_id = "Dave"

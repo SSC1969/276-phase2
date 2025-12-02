@@ -1,11 +1,11 @@
 from datetime import date, timedelta
 
+from fastapi import Depends
 from shared.database import Base, get_db
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from sqlalchemy.types import Boolean, Date, Integer, Interval, String
 
-from phase2.leaderboard import Leaderboard
 from phase2.round import RoundStats
 
 
@@ -75,10 +75,7 @@ class RoundStatisticsRepository:
         )
 
         self.session.add(round_row)  # log the round stats
-
-        lb_repo = Leaderboard(self.session)
-        lb_repo.stats_repo = self
-        await lb_repo.sync_user_entry(round_stats.user_id)
+        await self.lb_repo.sync_user_entry(round_stats.user_id)
 
         self.session.commit()
         return round_row
@@ -160,6 +157,5 @@ class RoundStatisticsRepository:
         )
 
 
-def get_statistics_repository() -> RoundStatisticsRepository:
-    db = get_db()
+def get_statistics_repository(db: Session = Depends(get_db)) -> RoundStatisticsRepository:
     return RoundStatisticsRepository(db)

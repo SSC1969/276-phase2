@@ -193,6 +193,7 @@ def content():
 
         # button to open account management menu
         ui.button("Account", on_click=go_to_account)
+        
 # button to display leaderboards
 """
 leaderboard

@@ -1,19 +1,18 @@
 import json
 from datetime import datetime, timezone
 
-from nicegui import ui
+from nicegui import app, ui
 
 from game.daily import get_daily_country, handle_guess
 from game.leaderboard_ui import fetch_leaderboard
-from phase2.account_ui import SESSION
+from phase2.account_ui import SESSION_STORAGE_NAME as USER_SESSION_STORAGE
 from phase2.country import Country
 from phase2.round import GuessFeedback, RoundStats
 
 # NiceGUI elements go here
 
+
 # display the game (guess input, guess feedback, timer, # of guesses, etc.)
-
-
 def concat_data(feedback, data) -> str:
     return str(feedback) + "|" + str(data)
 
@@ -71,6 +70,7 @@ def content():
         """
         Displays the feedback passed as an argument
         """
+        guess_display.text = f"{round_stats.guesses}/{round_stats.max_guesses} guesses"
 
         with guesses:
             for attr, value in vars(feedback).items():
@@ -126,7 +126,7 @@ def content():
         ui.notify("There was an issue processing that guess. Try something else!")
 
     @round_stats.game_ended.subscribe
-    def display_results(won: bool):
+    async def display_results(won: bool):
         """
         Displays the game results pop-up
         """
@@ -145,13 +145,30 @@ def content():
             ui.label(f"Time: {str(round_stats.round_length).split('.')[0]}")
             ui.label(f"Guesses: {round_stats.guesses}")
 
-            popup_leaderboard("daily")
+            # Display leaderboard only if user is logged in
+            if app.storage.user.get(USER_SESSION_STORAGE + "_user", False):
+                await popup_leaderboard("daily")
             ui.button("Close", on_click=dialog.close)
 
             dialog.open()
 
-    with ui.column(align_items="center").classes("mx-auto p-4"):
-        timer_text = ui.label("0:00:00").mark("timer")
+    def go_to_account():
+        user_id = app.storage.user.get(USER_SESSION_STORAGE + "_user", False)
+        if user_id:
+            ui.navigate.to("/account")
+        else:
+            ui.navigate.to("account/login?redirect_to=/account")
+
+    with ui.page_sticky(position="top-right", x_offset=20, y_offset=20):
+        with ui.button(icon="menu"):
+            with ui.menu().props("auto-close") as menu:
+                ui.menu_item("Account", go_to_account)
+                ui.separator()
+                ui.menu_item("Close", menu.close)
+
+    with ui.column(align_items="center").classes("mx-auto p-4 h-screen"):
+        ui.label("CountryClue").classes("text-h2")
+        timer_text = ui.label("0:00:00").classes("text-h6").mark("timer")
 
         def update_timer():
             if not round_stats.start_time:
@@ -164,13 +181,22 @@ def content():
 
         timer = ui.timer(1.0, update_timer)
 
-        guesses = ui.grid(columns=7).classes("w-full")
+        guesses = ui.grid(columns=7).classes("w-full text-center")
+        with guesses:
+            ui.label("Country Name")
+            ui.label("Population")
+            ui.label("Size")
+            ui.label("Region")
+            ui.label("Currencies")
+            ui.label("Language(s)")
+            ui.label("Timezone(s)")
 
-        with ui.card(align_items="center"):
+        with ui.card(align_items="center").classes("mt-auto"):
 
             def clear_input_error():
                 guess_input.error = None
 
+            guess_display = ui.label(f"{round_stats.guesses}/{round_stats.max_guesses} guesses")
             guess_input = (
                 ui.input(
                     label="Guess",
@@ -184,15 +210,7 @@ def content():
             )
             submit = ui.button("Submit", on_click=try_guess)
 
-        def go_to_account():
-            user = SESSION.get("user")
-            if user:
-                ui.navigate.to("/account")
-            else:
-                ui.navigate.to("/login?redirect_to=/account")
 
-        # button to open account management menu
-        ui.button("Account", on_click=go_to_account)
 # button to display leaderboards
 """
 leaderboard
@@ -203,7 +221,7 @@ leaderboard
 """
 
 
-def popup_leaderboard(mode: str):
+async def popup_leaderboard(mode: str):
     columns = [
         {"name": "user_id", "label": "Player", "field": "user_id", "sortable": True},
         {
@@ -245,14 +263,14 @@ def popup_leaderboard(mode: str):
                 "sortable": True,
             }
         )
-    table = ui.table(columns=columns, rows=fetch_leaderboard(), row_key="entry_id", pagination=10)
+    new_rows = await fetch_leaderboard()
+    table = ui.table(columns=columns, rows=new_rows, row_key="entry_id", pagination=10)
 
-    # TODO: Properly retrieve user id for logged in user
-    user_id = "Dave"
+    user_id = app.storage.user.get(USER_SESSION_STORAGE + "_user", False)
     row_index = None
     # Iterate through table until finding the correct entry
-    for i, row in enumerate(table.rows):
-        if row["user_id"] == user_id:
+    for i, entry in enumerate(new_rows):
+        if entry["user_id"] == user_id:
             row_index = i
     if not row_index:
         return
